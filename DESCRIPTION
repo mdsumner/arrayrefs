@@ -1,0 +1,17 @@
+Package: arrayrefs
+Title: Get Byte Range Refs from Files with 'VirtualiZarr'
+Version: 0.0.0.9000
+Authors@R: c(
+ person("Michael", "Sumner", email = "mdsumner@gmail.com", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-2471-7511"))
+      )
+Description: Get byte range refs from array sources with 'VirtualiZarr' but (mostly) without 'xarray'. We want a simple table
+ of path, offset, size, varname rather than the exploded hive array-tables used by 'kerchunk'.  
+License: MIT + file LICENSE
+Encoding: UTF-8
+Language: es
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Imports: 
+    furrr,
+    reticulate,
+    tibble

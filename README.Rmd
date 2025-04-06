@@ -1,0 +1,94 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# arrayrefs
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+The goal of arrayrefs is to get byte range refs with VirtualiZarr but (mostly) without xarray. 
+
+There's very simple information in a reference database, it's path, offset, size, varname, and the (chunk) index. If we get this in an 
+simple format we can easily express in different ways for other formats. 
+
+
+
+## Installation
+
+Not yet
+
+
+```{r include = FALSE, eval=FALSE}
+#You can install the development version of arrayrefs like so:
+
+remotes::install_github("mdsumner/arrayrefs")
+```
+
+## Example
+
+This is a basic example (hey this needs very recent virtualizarr, working on my HPC for now)
+
+```{r example,eval=FALSE,include =TRUE}
+library(arrayrefs)
+## compare approach here to https://github.com/zarr-developers/VirtualiZarr/issues/533
+library(sooty)
+ds <- dataset()
+ds@id <- "oisst-avhrr-v02r01"
+s3files <- gsub("/vsis3/", "s3://", ds@source$source)[1:30]
+## we could just sub this in in place of s3:// but haven't check virtualizarr will allow
+s3_creds <-  reticulate::dict(endpoint_url = "https://projects.pawsey.org.au", anon = TRUE)
+ro <- reticulate::dict(storage_options = s3_creds)
+
+
+options(parallelly.fork.enable = TRUE, future.rng.onMisuse = "ignore")
+library(furrr); plan(multicore)
+vars <- c("sst", "anom", "err", "ice")
+dslist <- future_map_dfr(s3files, arrayrefs:::getrefs, vars, reader_options = ro)
+
+
+```
+
+That took a couple of minutes, no dask problems and no need for concurrent.futures (this is very light on chunks though, only one chunk per file). 
+Obviously we wasted storage space with the url and the varname and the index, but we don't have to navigate complex object trees this way. It's a balance. 
+
+```
+dslist
+# A tibble: 63,688 × 5
+   path                                              offset length index varname
+   <chr>                                              <int>  <int> <chr> <chr>
+ 1 s3://idea-10.7289-v5sq8xb5/www.ncei.noaa.gov/dat… 1.03e6 683590 0.0.… sst
+ 2 s3://idea-10.7289-v5sq8xb5/www.ncei.noaa.gov/dat… 4.77e4 684063 0.0.… anom
+ 3 s3://idea-10.7289-v5sq8xb5/www.ncei.noaa.gov/dat… 7.32e5 222214 0.0.… err
+ 4 s3://idea-10.7289-v5sq8xb5/www.ncei.noaa.gov/dat… 9.54e5  70081 0.0.… ice
+ 5 s3://idea-10.7289-v5sq8xb5/www.ncei.noaa.gov/dat… 1.03e6 684863 0.0.… sst
+ 6 s3://idea-10.7289-v5sq8xb5/www.ncei.noaa.gov/dat… 4.77e4 686733 0.0.… anom
+ 7 s3://idea-10.7289-v5sq8xb5/www.ncei.noaa.gov/dat… 7.34e5 223997 0.0.… err
+ 8 s3://idea-10.7289-v5sq8xb5/www.ncei.noaa.gov/dat… 9.58e5  71560 0.0.… ice
+ 9 s3://idea-10.7289-v5sq8xb5/www.ncei.noaa.gov/dat… 1.03e6 683768 0.0.… sst
+10 s3://idea-10.7289-v5sq8xb5/www.ncei.noaa.gov/dat… 4.77e4 685793 0.0.… anom
+# ℹ 63,678 more rows
+# ℹ Use `print(n = ...)` to see more rows
+> dslist$path[1]
+[1] "s3://idea-10.7289-v5sq8xb5/www.ncei.noaa.gov/data/sea-surface-temperature-optimum-interpolation/v2.1/access/avhrr/198109/oisst-avhrr-v02r01.19810901.nc"
+> dslist$path[nrow(dslist)]
+[1] "s3://idea-10.7289-v5sq8xb5/www.ncei.noaa.gov/data/sea-surface-temperature-optimum-interpolation/v2.1/access/avhrr/202504/oisst-avhrr-v02r01.20250404_preliminary.nc"
+length(unique(dslist$path))
+[1] 15922
+
+```
+
+## Code of Conduct
+  
+Please note that the arrayrefs project is released with a [Contributor Code of Conduct](https://contributor-covenant.org/version/2/1/CODE_OF_CONDUCT.html). By contributing to this project, you agree to abide by its terms.
