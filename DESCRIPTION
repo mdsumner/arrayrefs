@@ -15,3 +15,5 @@ Imports:
     furrr,
     reticulate,
     tibble
+URL: https://github.com/mdsumner/arrayrefs
+BugReports: https://github.com/mdsumner/arrayrefs/issues
