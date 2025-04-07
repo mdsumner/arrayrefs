@@ -40,7 +40,6 @@ vars <- c("sst", "anom", "err", "ice")
 dslist <- future_map_dfr(s3files, arrayrefs:::getrefs, vars, reader_options = ro)
 
 arrow::write_parquet(dslist, "examples/oisst.nc.parquet")
-
 ```
 
 That took a couple of minutes, no dask problems and no need for
