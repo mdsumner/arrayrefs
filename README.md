@@ -28,7 +28,7 @@ library(arrayrefs)
 library(sooty)
 ds <- dataset()
 ds@id <- "oisst-avhrr-v02r01"
-s3files <- gsub("/vsis3/", "s3://", ds@source$source)[1:30]
+s3files <- gsub("/vsis3/", "s3://", ds@source$source)
 ## we could just sub this in in place of s3:// but haven't check virtualizarr will allow
 s3_creds <-  reticulate::dict(endpoint_url = "https://projects.pawsey.org.au", anon = TRUE)
 ro <- reticulate::dict(storage_options = s3_creds)
@@ -38,6 +38,9 @@ options(parallelly.fork.enable = TRUE, future.rng.onMisuse = "ignore")
 library(furrr); plan(multicore)
 vars <- c("sst", "anom", "err", "ice")
 dslist <- future_map_dfr(s3files, arrayrefs:::getrefs, vars, reader_options = ro)
+
+arrow::write_parquet(dslist, "examples/oisst.nc.parquet")
+
 ```
 
 That took a couple of minutes, no dask problems and no need for
